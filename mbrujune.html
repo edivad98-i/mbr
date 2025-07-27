@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mbrujune</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top to allow scrolling */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #2d3748; /* Slightly lighter dark background for container */
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+        }
+        .player-card {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-align: center;
+            min-height: 80px; /* Ensure cards have a minimum height */
+        }
+        .player-card:hover:not(.revealed) {
+            transform: translateY(-5px);
+            background-color: #636b7a;
+        }
+        .player-card.revealed {
+            background-color: #2c3748; /* Darker when revealed */
+            color: #a0aec0; /* Dimmed text when revealed */
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: #2d3748;
+            margin: auto;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: fadeIn 0.3s ease-out;
+            border: 2px solid #4299e1; /* Blue border for emphasis */
+        }
+        .modal-role {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #4299e1; /* Blue for role */
+        }
+        .modal-word {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #a0aec0; /* Light gray for word */
+        }
+        .modal-mbrujune { /* Changed class name */
+            color: #fc8181; /* Red for mbrujune */
+        }
+        .modal-socio {
+            color: #68d391; /* Green for socio */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            text-align: left;
+            font-weight: 600;
+            color: #a0aec0;
+        }
+        .input-group input {
+            background-color: #4a5568;
+            border: 1px solid #636b7a;
+            color: #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #4299e1; /* Blue */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #3182ce; /* Darker blue */
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #e53e3e; /* Red */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #c53030; /* Darker red */
+            transform: translateY(-2px);
+        }
+        .btn-tertiary {
+            background-color: #f6ad55; /* Orange */
+            color: white;
+        }
+        .btn-tertiary:hover {
+            background-color: #dd6b20; /* Darker orange */
+            transform: translateY(-2px);
+        }
+        .hidden {
+            display: none;
+        }
+        .grid-players {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            .modal-content {
+                padding: 1.5rem;
+            }
+            .modal-role {
+                font-size: 2rem;
+            }
+            .modal-word {
+                font-size: 1.5rem;
+            }
+            .btn-group {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Mbrujune</h1>
+        <h2 class="text-lg text-gray-400 mb-6">Anche oggi Matteo non ha portato le carte</h2>
+
+        <!-- Player Name Input Section -->
+        <div id="player-input-section">
+            <p class="text-gray-300 mb-4">Inserisci i nomi dei giocatori (da 3 a 10):</p>
+            <div id="player-name-inputs" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Inputs will be dynamically added here by JS -->
+            </div>
+            <button id="start-game-btn" class="btn btn-primary w-full md:w-auto">Inizia Partita</button>
+        </div>
+
+        <!-- Game Play Section -->
+        <div id="game-play-section" class="hidden">
+            <p class="text-gray-300 mb-4">Clicca sulla tua carta per rivelare il tuo ruolo!</p>
+            <div id="player-cards-container" class="grid-players">
+                <!-- Player cards will be dynamically added here by JS -->
+            </div>
+            <div class="flex flex-col md:flex-row justify-center gap-4 mt-8 btn-group">
+                <button id="new-round-same-players-btn" class="btn btn-tertiary w-full md:w-auto">Scioca n'torna (Stessi Giocatori)</button>
+                <button id="reset-all-game-btn" class="btn btn-secondary w-full md:w-auto">Azzera Tutto e Rigioca</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Role/Word Display -->
+    <div id="role-modal" class="modal">
+        <div class="modal-content">
+            <p class="text-gray-400 text-xl mb-2">Il tuo ruolo è:</p>
+            <p class="modal-role" id="modal-role-text"></p>
+            <p class="text-gray-400 text-xl mt-4 mb-2">La parola è:</p>
+            <p class="modal-word" id="modal-word-text"></p>
+            <p class="text-gray-500 text-sm mt-6">Questa finestra si chiuderà automaticamente.</p>
+        </div>
+    </div>
+
+    <script>
+        // Array di parole salentine fornite
+        const salentinoWords = [
+            "aratinu", "all’ampete", "arburi", "aciuveddrhi", "arunca-arune", "basciare", "beddrhu", "bracchiata", "binchiatu", "cannarutu", "caura", "capiddrhi", "cascia", "cavaddrhu", "cinere", "cista", "cicuredrhe", "caniatu", "coddrhu", "chinu", "curtedrhu", "ccattatu", "ccucciarsi", "cuttone", "cucchiara", "cuscinu", "cucinu", "crai", "carusa", "casu", "chisura", "caddrhu", "caddrhina", "cuntare", "cchiali", "craune", "ciuvedrhi", "chiangire", "chiazza", "chianta", "cute", "cojere", "chiove", "chianca", "capisutta", "capasa-capasune", "critare", "cucuzza", "cannizzu", "dirluttare", "darlampare", "de nanzi", "de reta", "de costi", "duce", "ddoi", "ete", "frascera", "fuscire", "fauce", "freve", "fuiazze", "furcina", "frate", "fraima", "friseddhre", "fiata", "farnaru", "gnaunu", "giurnu", "iancu", "iddhru", "iernu", "imbrici", "insita", "liune", "lissia", "lavaturu", "lucisce", "licitu", "lunitia", "minaturu", "manu ritta", "manu torta", "maranci", "marangiane", "muddrhati", "mmalazzare", "masiricoi", "mpudrha", "minare", "mena,maniscite", "mieru", "municedrhe", "mammita", "mesciu", "mazzu", "moia", "martitia", "mercutia", "menzatia", "mele", "mujere", "muzzicare", "muntarrune", "mpauratu", "nfiammu", "nfiamare", "ndaqualora", "nserraia", "ngraziatu", "nzippi", "nzumpare", "ncignare", "naca", "nchiostru", "none", "nucedrhe", "natare", "nnittare", "ngiurita", "nicchiaricu", "nnulatu", "ota", "poscia", "Puru", "paddrhotta", "puteca", "pajaru", "piscrai", "pasuli", "posperu", "picalò", "porcu", "pesciu", "puddrhasci", "pizzulisciare", "quasette", "quidrhi", "rimasuje", "razze", "rranfatu", "rumatu", "ricchie", "rusciu", "scalune", "sirma", "sarmenti", "stipu", "scunnire", "ssucare", "scarparu", "sgarrata", "siminselle", "scurdare", "spicciare", "stijune", "sciurnata", "sarica", "sannucchiu", "sine", "sorma", "scencu", "tostu", "trasi", "tumminata", "teni", "tegnu", "tignusi",
+            "tarlosci", "tarlusciaru", "turcire", "tiraletti", "urpe", "ulie", "vanzare", "viddrhicu", "vagnoni", "vancutedrhu", "vinirdia", "ziccare", "zita", "zinzale"
+        ];
+
+        // Elementi DOM
+        const playerInputSection = document.getElementById('player-input-section');
+        const playerNamesInputDiv = document.getElementById('player-name-inputs');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const gamePlaySection = document.getElementById('game-play-section');
+        const playerCardContainer = document.getElementById('player-cards-container');
+        const newRoundSamePlayersBtn = document.getElementById('new-round-same-players-btn');
+        const resetAllGameBtn = document.getElementById('reset-all-game-btn');
+        const roleModal = document.getElementById('role-modal');
+        const modalRoleText = document.getElementById('modal-role-text');
+        const modalWordText = document.getElementById('modal-word-text');
+
+        let players = []; // Array to store player names and their roles
+        let secretWord = '';
+        const MIN_PLAYERS = 3;
+        const MAX_PLAYERS = 10;
+        let modalTimeout;
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize player name input fields
+        function initializePlayerInputs() {
+            playerNamesInputDiv.innerHTML = '';
+            for (let i = 0; i < MAX_PLAYERS; i++) {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group';
+                const label = document.createElement('label');
+                label.setAttribute('for', `player-name-${i}`);
+                label.textContent = `Giocatore ${i + 1}:`;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `player-name-${i}`;
+                input.placeholder = `Nome Giocatore ${i + 1}`;
+                input.className = 'player-name-input';
+                if (i >= MIN_PLAYERS) {
+                    inputGroup.classList.add('hidden'); // Hide inputs beyond the initial minimum
+                }
+                inputGroup.appendChild(label);
+                inputGroup.appendChild(input);
+                playerNamesInputDiv.appendChild(inputGroup);
+            }
+            // Show only the minimum number of inputs initially
+            showPlayerInputs(MIN_PLAYERS);
+        }
+
+        // Show or hide input fields based on the number of players
+        function showPlayerInputs(count) {
+            const inputs = document.querySelectorAll('.player-name-input');
+            inputs.forEach((input, index) => {
+                const parentGroup = input.closest('.input-group');
+                if (index < count) {
+                    parentGroup.classList.remove('hidden');
+                } else {
+                    parentGroup.classList.add('hidden');
+                    input.value = ''; // Clear hidden fields
+                }
+            });
+        }
+
+        // Listener for player count and input display
+        playerNamesInputDiv.addEventListener('input', (event) => {
+            if (event.target.classList.contains('player-name-input')) {
+                const currentInputs = Array.from(document.querySelectorAll('.player-name-input'));
+                let filledCount = 0;
+                currentInputs.forEach(input => {
+                    if (input.value.trim() !== '') {
+                        filledCount++;
+                    }
+                });
+
+                // Show an additional input if the last visible one has been filled, up to MAX_PLAYERS
+                const lastVisibleInput = currentInputs.findLast(input => !input.closest('.input-group').classList.contains('hidden'));
+                if (lastVisibleInput && lastVisibleInput.value.trim() !== '' && filledCount < MAX_PLAYERS) {
+                    const nextInputIndex = currentInputs.indexOf(lastVisibleInput) + 1;
+                    if (nextInputIndex < MAX_PLAYERS) {
+                        currentInputs[nextInputIndex].closest('.input-group').classList.remove('hidden');
+                    }
+                }
+            }
+        });
+
+        // Function to show the modal with explanatory phrases
+        function showModal(role, word, isMbrujune) { // Changed isImpostor to isMbrujune
+            modalRoleText.textContent = role;
+            modalWordText.textContent = word;
+            modalRoleText.className = `modal-role ${isMbrujune ? 'modal-mbrujune' : 'modal-socio'}`; // Changed class name
+            roleModal.style.display = 'flex'; // Use flex to center content
+            clearTimeout(modalTimeout); // Clear previous timeouts
+            modalTimeout = setTimeout(() => {
+                roleModal.style.display = 'none';
+            }, 5000); // Modal closes after 5 seconds
+        }
+
+        // Function to hide the modal
+        function hideModal() {
+            roleModal.style.display = 'none';
+            clearTimeout(modalTimeout);
+        }
+
+        // Player card click handler
+        function revealRole(playerIndex) {
+            const playerCard = document.getElementById(`player-card-${playerIndex}`);
+            if (playerCard.classList.contains('revealed')) {
+                return; // Already revealed, do nothing
+            }
+
+            const player = players[playerIndex];
+            const role = player.isMbrujune ? 'MBRUJUNE' : 'SOCIO'; // Changed role name
+            const word = player.isMbrujune ? 'Non conosci la parola segreta!' : secretWord; // Changed role name
+
+            showModal(role, word, player.isMbrujune); // Changed isImpostor to isMbrujune
+
+            playerCard.classList.add('revealed');
+            playerCard.onclick = null; // Remove event handler to prevent multiple clicks
+        }
+
+        // Function to display player cards
+        function displayPlayerCards() {
+            playerCardContainer.innerHTML = '';
+            players.forEach((player, index) => {
+                const card = document.createElement('button');
+                card.id = `player-card-${index}`;
+                card.className = 'player-card';
+                card.textContent = player.name;
+                card.onclick = () => revealRole(index);
+                playerCardContainer.appendChild(card);
+            });
+        }
+
+        // Function to start the game (first time or with new players)
+        function startGame() {
+            players = [];
+            const playerNameInputs = document.querySelectorAll('.player-name-input');
+            playerNameInputs.forEach(input => {
+                const name = input.value.trim();
+                if (name !== '') {
+                    players.push({ name: name, isMbrujune: false }); // Changed isImpostor to isMbrujune
+                }
+            });
+
+            if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
+                alert(`Per favore, inserisci tra ${MIN_PLAYERS} e ${MAX_PLAYERS} nomi di giocatori.`);
+                return;
+            }
+
+            // Initialize roles and secret word
+            assignRolesAndWord();
+
+            // Hide input section and show game section
+            playerInputSection.classList.add('hidden');
+            gamePlaySection.classList.remove('hidden');
+
+            // Display player cards
+            displayPlayerCards();
+        }
+
+        // Function to assign roles and secret word
+        function assignRolesAndWord() {
+            // Select a random secret word from salentinoWords
+            secretWord = salentinoWords[Math.floor(Math.random() * salentinoWords.length)].toUpperCase();
+
+            // Reset roles for all players
+            players.forEach(player => player.isMbrujune = false); // Changed isImpostor to isMbrujune
+
+            // Assign Mbrujune role randomly
+            const mbrujuneIndex = Math.floor(Math.random() * players.length); // Changed impostorIndex to mbrujuneIndex
+            players[mbrujuneIndex].isMbrujune = true; // Changed isImpostor to isMbrujune
+
+            // Shuffle players to make card order unpredictable
+            players = shuffleArray(players);
+        }
+
+        // Function to start a new round with the same players
+        function startNewRoundSamePlayers() {
+            // Ensure there are players from the previous round
+            if (players.length === 0) {
+                alert("Non ci sono giocatori per iniziare un nuovo round. Per favore, azzera tutto e rigioca.");
+                resetAllGame(); // Return to input screen if no players
+                return;
+            }
+
+            // Assign new roles and a new secret word
+            assignRolesAndWord();
+
+            // Hide modal if open
+            hideModal();
+
+            // Re-display player cards with new roles (unrevealed)
+            displayPlayerCards();
+        }
+
+        // Function to completely reset the game (Azzera Tutto e Rigioca)
+        function resetAllGame() {
+            players = [];
+            secretWord = '';
+            playerCardContainer.innerHTML = '';
+            hideModal(); // Ensure modal is hidden
+            gamePlaySection.classList.add('hidden');
+            playerInputSection.classList.remove('hidden');
+            initializePlayerInputs(); // Re-initialize name inputs
+        }
+
+        // Add event listeners
+        startGameBtn.addEventListener('click', startGame);
+        newRoundSamePlayersBtn.addEventListener('click', startNewRoundSamePlayers);
+        resetAllGameBtn.addEventListener('click', resetAllGame);
+        roleModal.addEventListener('click', hideModal); // Close modal by clicking outside content
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializePlayerInputs);
+    </script>
+</body>
+</html>
